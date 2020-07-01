@@ -18,6 +18,26 @@ Step 2. Add the dependency(Tag是对应的版本)
     }
 ```
  # Usage:
+ ### 初始化参数
+ ```android
+String endPoint = "cn-shenzhen.log.aliyuncs.com";
+
+String accessKeyID = "LTAI*******oipRi";
+
+String accessKeySecret = "CYFJz*********i0P";
+
+String projectName = "jhb-log-test";
+
+String logStoreName = "jhb-logstore-test";
+
+String token = "";
+
+LogConfig config = new LogConfig(endPoint,accessKeyID,accessKeySecret,projectName,logStoreName,token);
+
+LogManager.getInstance().setupLogConfig(getApplicationContext(),config);
+
+DatabaseManager.getInstance().setupDBContext(getApplicationContext());
+```    
  
 ### 上传日志
 ```android
