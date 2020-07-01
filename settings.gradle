@@ -1,0 +1,3 @@
+include ':aliyun-log'
+include ':app'
+rootProject.name = "aliyun-log-android"

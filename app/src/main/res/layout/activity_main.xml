@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:orientation="vertical"
+        android:showDividers="middle"
+        android:gravity="center_horizontal"
+        android:layout_height="match_parent">
+
+        <Button
+            android:id="@+id/button_save_log"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="保存日志"
+            android:onClick="saveLog"
+            android:layout_marginTop="100dp"
+            />
+        <Button
+            android:id="@+id/button_upload_log"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="上传持久化日志"
+            android:onClick="uploadArchiveLog"
+            android:layout_marginTop="2dp"
+            />
+        <Button
+            android:id="@+id/button_first"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="上传日志"
+            android:onClick="postLog"
+            android:layout_marginTop="50dp"
+            />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
