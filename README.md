@@ -21,21 +21,13 @@ Step 2. Add the dependency(Tag是对应的版本)
  ### 初始化参数
  ```android
 String endPoint = "cn-shenzhen.log.aliyuncs.com";
-
 String accessKeyID = "LTAI*******oipRi";
-
 String accessKeySecret = "CYFJz*********i0P";
-
 String projectName = "jhb-log-test";
-
 String logStoreName = "jhb-logstore-test";
-
 String token = "";
-
 LogConfig config = new LogConfig(endPoint,accessKeyID,accessKeySecret,projectName,logStoreName,token);
-
 LogManager.getInstance().setupLogConfig(getApplicationContext(),config);
-
 DatabaseManager.getInstance().setupDBContext(getApplicationContext());
 ```    
  
@@ -46,12 +38,10 @@ logModel.putContent("androidLogError","android3232323");
 logModel.putContent("androidUrl","/android/url/error");
 List<LogModel> logList = new ArrayList<>();
 logList.add(logModel);
-
 LogGroupModel logGroupModel = new LogGroupModel("android-log-topic-20200618","android-log-source-20200618",logList);
 LogManager.getInstance().postLog(logGroupModel, new CompletedCallback<PostLogRequest, PostLogResult>() {
      @Override
-     public void onSuccess(PostLogRequest postLogRequest, PostLogResult postLogResult) {
-                
+     public void onSuccess(PostLogRequest postLogRequest, PostLogResult postLogResult) {          
      }
 
      @Override
@@ -68,7 +58,6 @@ logModel.putContent("androidLogError","android3232323");
 logModel.putContent("androidUrl","/android/url/error");
 List<LogModel> logList = new ArrayList<>();
 logList.add(logModel);
-
 LogGroupModel logGroupModel = new LogGroupModel("android-log-topic-20200618","android-log-source-20200618",logList);
 LogManager.getInstance().saveLog(logGroupModel);
 ```

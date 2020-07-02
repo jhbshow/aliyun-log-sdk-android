@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Gradle: ./aliyun-log/src/main/java/com/example/aliyun_log/aliyun_log_sdk/aliyun-log-sdk-android-2.1.0.jar">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/aliyun-log/src/main/java/com/example/aliyun_log/aliyun_log_sdk/aliyun-log-sdk-android-2.1.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
