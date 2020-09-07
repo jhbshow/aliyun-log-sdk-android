@@ -24,14 +24,16 @@ import com.example.aliyun_log.jhb.models.LogModel;
 import java.util.ArrayList;
 import java.util.Date;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class LogManager {
       //单列
     private static LogManager instance;
     private LogManager(){ }
-    public static class SingletonInstance {
+    private static class SingletonInstance {
         private static final LogManager INSTANCE = new LogManager();
     }
     public static LogManager getInstance() {
@@ -74,21 +76,25 @@ public class LogManager {
         conf.setConnectType(ClientConfiguration.NetworkPolicy.WWAN_OR_WIFI);
         this.logClient = new LOGClient(context,config.getEndPoint(),credentialProvider,conf);
 
+        DatabaseManager.getInstance().setupDBContext(context);
+        this.checkLocalLog();
     }
 
     /**
      * 上传日志
      */
     public void postLog(final LogGroupModel logGroupModel, final CompletedCallback<PostLogRequest, PostLogResult> callback){
+        if(!isHaveConfig()){
+            return;
+        }
         if(logGroupModel.logIsEmpty()){
             Log.e("aliyunLog","日志数据为空");
             return;
         }
    
         try {
-            final LogEntity entity = this.getLogEntity(logGroupModel);
-            if(logGroupModel.isNeedInsertDB){
-                this.saveLog(entity);
+            if(logGroupModel.isCacheLog == false){
+                this.saveLog(logGroupModel);
             }
 
             LogGroup logGroup = logGroupModel.convertAliyunLogGroup();
@@ -97,14 +103,28 @@ public class LogManager {
             logClient.asyncPostLog(request, new CompletedCallback<PostLogRequest, PostLogResult>() {
                 @Override
                 public void onSuccess(PostLogRequest postLogRequest, PostLogResult postLogResult) {
-                    if(logGroupModel.isNeedInsertDB){
-                        LogManager.getInstance().deleteLogFromDB(entity);
+                    if(logGroupModel.isCacheLog == false){
+                        LogEntity entity = getLogEntity(logGroupModel);
+                        List<LogEntity> list = SLSDatabaseManager.getInstance().queryRecordFromDB();
+                        List<LogEntity> deleteList = new ArrayList<>();
+                        for (final LogEntity logEntity: list) {
+                            //这里的json字符串有一个毫秒时间戳，准确判断
+                            if(logEntity.getJsonString().equals(entity.getJsonString())){
+                                deleteList.add(logEntity);
+                            }
+                        }
+                        LogManager.getInstance().deleteLogFromDB(deleteList);
+                    }else {
+                        //缓存的日志
+                        LogManager.getInstance().deleteLogFromDB(logGroupModel.logEntityList);
                     }
+                    checkLocalLog();
                     callback.onSuccess(postLogRequest,postLogResult);
                 }
 
                 @Override
                 public void onFailure(PostLogRequest postLogRequest, LogException e) {
+                    checkLocalLog();
                     callback.onFailure(postLogRequest,e);
                 }
             });
@@ -114,54 +134,96 @@ public class LogManager {
     }
 
     /**
-     * 获取日志存储实列
-     * @param logGroupModel
-     * @return
-     */
-    public LogEntity getLogEntity(LogGroupModel logGroupModel){
-        LogEntity entity = new LogEntity();
-        entity.setEndPoint(logConfig.getEndPoint());
-        entity.setStore(logConfig.getLogStoreName());
-        entity.setProject(logConfig.getProjectName());
-        String jsonString = logGroupModel.convertToJsonString();
-        entity.setJsonString(jsonString);
-        entity.setTimestamp(new Long((new Date()).getTime()));
-        return  entity;
-    }
-
-    /**
-     * 保存日志
-     */
-    protected void saveLog(LogEntity entity){
-        SLSDatabaseManager.getInstance().insertRecordIntoDB(entity);
-    }
-
-    /**
      * 保存日志
      * @param logGroupModel
      */
     public void saveLog(LogGroupModel logGroupModel){
-        LogEntity entity = getLogEntity(logGroupModel);
-        saveLog(entity);
+
+        if(!isHaveConfig()){
+            return;
+        }
+        LogEntity entity = this.getLogEntity(logGroupModel);
+        SLSDatabaseManager.getInstance().insertRecordIntoDB(entity);
     }
 
     /**
-     * 删除日志
-     * @param entity
+     * 开始日志服务
      */
-    public void deleteLogFromDB(LogEntity entity){
-        SLSDatabaseManager.getInstance().deleteRecordFromDB(entity);
+    public void startLogService(){
+        this.checkLocalLog();
+    }
+
+    /**
+     * 停止日志服务
+     */
+    public void stopLogService(){
+        LogCacheManager.getInstance().stopTimer();
+    }
+
+    /**
+     * 是否有配置阿里云
+     */
+    private Boolean isHaveConfig(){
+        if(logConfig == null){
+            Log.e("LogManager","阿里云日志上传参数没有配置");
+        }
+        return logConfig != null;
+    }
+
+    /**
+     * 获取日志存储实列
+     * @param logGroupModel
+     * @return
+     */
+    private LogEntity getLogEntity(LogGroupModel logGroupModel){
+        LogEntity entity = new LogEntity();
+        try{
+            entity.setEndPoint(logConfig.getEndPoint());
+            entity.setStore(logConfig.getLogStoreName());
+            entity.setProject(logConfig.getProjectName());
+            String jsonString = logGroupModel.convertToJsonString();
+            entity.setJsonString(jsonString);
+            entity.setTimestamp(new Long((new Date()).getTime()));
+        }catch (Exception e){
+        };
+        return  entity;
+    }
+
+
+    /**
+     * 删除日志
+     * @param logEntities
+     */
+    private void deleteLogFromDB(List<LogEntity> logEntities){
+        for (LogEntity entity:logEntities){
+            SLSDatabaseManager.getInstance().deleteRecordFromDB(entity);
+        }
+    }
+
+    /**
+     * 检查本地日志
+     */
+    private void checkLocalLog() {
+        List<LogEntity> list = SLSDatabaseManager.getInstance().queryRecordFromDB();
+        if (list.size() == 0) {
+            LogCacheManager.getInstance().stopTimer();
+        } else {
+            LogCacheManager.getInstance().setupTimer();
+        }
     }
 
     /**
      * 上传数据库日志数据
      */
     public void uploadDbLogData(){
+        if(!isHaveConfig()){
+            return;
+        }
         new Thread(new Runnable() {
-
             @Override
             public void run() {
                 try {
+                    Map<String,LogGroupModel> logGroupMap = new HashMap();
                     /* 发送log 会调用网络操作，需要在一个异步线程中完成*/
                     List<LogEntity> list = SLSDatabaseManager.getInstance().queryRecordFromDB();
                     for (final LogEntity logEntity: list) {
@@ -169,36 +231,41 @@ public class LogManager {
                         try{
                             final LogGroupModel logGroupModel = new LogGroupModel(jsonString);
                             logGroupModel.postCount = logGroupModel.postCount + 1;
-                            logGroupModel.isNeedInsertDB = false;
+                            logGroupModel.isCacheLog = true;
+                            logGroupModel.logEntityList.add(logEntity);
 
+                            if(!(logEntity.getProject().equals(logConfig.getProjectName()) && logEntity.getStore().equals(logConfig.getLogStoreName()))){
+                                //不是同一个数据库的,先不管
+                                continue;
+                            }
                             if(logGroupModel.logIsEmpty()){
                                 //日志为空的时候上传是不成功的,避免数据格式问题
                                 //既然有上传，格式有问题，也要上传到阿里云记录下来
-
-                                LogManager.getInstance().deleteLogFromDB(logEntity);
+                                LogManager.getInstance().deleteLogFromDB(logGroupModel.logEntityList);
                                 LogManager.getInstance().handerLogFormatFail(logGroupModel);
                                 continue;
                             }
 
-                            LogManager.getInstance().postLog(logGroupModel, new CompletedCallback<PostLogRequest, PostLogResult>() {
-                                @Override
-                                public void onSuccess(PostLogRequest postLogRequest, PostLogResult logRequestResult) {
-                                    LogManager.getInstance().deleteLogFromDB(logEntity);
-                                }
-                                @Override
-                                public void onFailure(PostLogRequest postLogRequest, LogException e) {
-
-                                    Log.e("LogManager","上传持久化日志失败");
-                                }
-                            });
+                            String logTopic = logGroupModel.getLogTopic();
+                            LogGroupModel tempModel;
+                            if(logGroupMap.containsKey(logTopic)){
+                                tempModel = logGroupMap.get(logTopic);
+                                tempModel.addLogContents(logGroupModel);
+                                tempModel.logEntityList.add(logEntity);
+                            } else {
+                                tempModel = logGroupModel;
+                            }
+                            logGroupMap.put(logTopic,tempModel);
                         }catch (Exception e){
                              //日志持久化数据解析出错
                             JSONObject object = JSONObject.parseObject(jsonString);
                             String logTopic = object.getString("logTopic");
                             String logSource = object.getString("logSource");
+                            List<LogEntity> logEntities = new ArrayList<>();
+                            logEntities.add(logEntity);
 
                             //删除持久化
-                            LogManager.getInstance().deleteLogFromDB(logEntity);
+                            LogManager.getInstance().deleteLogFromDB(logEntities);
 
                             //重新写入日志持久化
                             LogModel logModel = new LogModel();
@@ -209,6 +276,10 @@ public class LogManager {
                             LogManager.getInstance().handerLogFormatFail(logGroupModel);
                         }
                     }
+
+                    for (LogGroupModel logGroupModel : logGroupMap.values()) {
+                        postCacheLog(logGroupModel);
+                    }
                 } catch (Exception e) {
 
                 }
@@ -217,11 +288,26 @@ public class LogManager {
     }
 
     /**
+     * 上传缓存日志
+     * @param logGroupModel
+     */
+    private void postCacheLog(final LogGroupModel logGroupModel){
+        LogManager.getInstance().postLog(logGroupModel, new CompletedCallback<PostLogRequest, PostLogResult>() {
+            @Override
+            public void onSuccess(PostLogRequest postLogRequest, PostLogResult logRequestResult) {
+            }
+            @Override
+            public void onFailure(PostLogRequest postLogRequest, LogException e) {
+                Log.e("LogManager","上传持久化日志失败");
+            }
+        });
+    }
+
+    /**
      * 处理日志格式错误
      * @param logGroupModel
      */
     private void handerLogFormatFail(LogGroupModel logGroupModel){
-
         String jsonString = logGroupModel.convertToJsonString();
         LogModel logModel = new LogModel();
         logModel.putContent("content",jsonString);
@@ -229,10 +315,7 @@ public class LogManager {
         List<LogModel> logContents = new ArrayList<>();
         logContents.add(logModel);
         LogGroupModel newLogGroupModel = new LogGroupModel(logGroupModel.getLogTopic(),logGroupModel.getLogSource(),logContents);
-        LogEntity failEntity = LogManager.getInstance().getLogEntity(newLogGroupModel);
-
-        LogManager.getInstance().saveLog(failEntity);
-
+        LogManager.getInstance().saveLog(newLogGroupModel);
     }
 
 }

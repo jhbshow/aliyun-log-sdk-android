@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
+import com.aliyun.sls.android.sdk.LogEntity;
 import com.aliyun.sls.android.sdk.model.Log;
 import com.aliyun.sls.android.sdk.model.LogGroup;
 
@@ -34,16 +35,18 @@ public class LogGroupModel {
     private Map<String,String> logTagContentMap = new HashMap();
 
     /**
-     * 是否需要插入DB
+     * 是否是缓存日志
      */
-    public boolean isNeedInsertDB = true;
+    public boolean isCacheLog = false;
 
     /**
      * 上传次数(针对上传失败的处理)
      */
     public int postCount = 0;
-
-
+    /**
+     * 多个logentity(上传缓存日志有用)
+     */
+    public List<LogEntity> logEntityList = new ArrayList<>();
 
     /**
      * 初始化
@@ -117,17 +120,33 @@ public class LogGroupModel {
     }
 
     /**
+     * 添加日志内容
+     * @param model
+     */
+    public void addLogContents(LogGroupModel model){
+        this.logContents.addAll(model.logContents);
+    }
+
+    /**
      * 日志是否为空
      * @return
      */
     public boolean logIsEmpty(){
-        return logContents.isEmpty();
+        return logContents.isEmpty() || logTopic.isEmpty() || logSource.isEmpty();
     }
 
+    /**
+     * 获取日志topic
+     * @return
+     */
     public String getLogTopic(){
         return  logTopic;
     }
 
+    /**
+     * 获取日志来源
+     * @return
+     */
     public String getLogSource(){
         return  logSource;
     }

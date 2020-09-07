@@ -14,7 +14,8 @@ Step 1. Add it in your root build.gradle at the end of repositories:
 Step 2. Add the dependency(Tag是对应的版本)
 ```android
     dependencies {
-           implementation 'com.github.cuirhong:aliyun-log-android:Tag'
+          implementation 'com.alibaba:fastjson:1.2.35'
+          implementation 'com.github.jhbshow:aliyun-log-sdk-android:0.0.1'
     }
 ```
  # Usage:
@@ -25,10 +26,8 @@ String accessKeyID = "LTAI*******oipRi";
 String accessKeySecret = "CYFJz*********i0P";
 String projectName = "jhb-log-test";
 String logStoreName = "jhb-logstore-test";
-String token = "";
-LogConfig config = new LogConfig(endPoint,accessKeyID,accessKeySecret,projectName,logStoreName,token);
+LogConfig config = new LogConfig(endPoint,accessKeyID,accessKeySecret,projectName,logStoreName,"");
 LogManager.getInstance().setupLogConfig(getApplicationContext(),config);
-DatabaseManager.getInstance().setupDBContext(getApplicationContext());
 ```    
  
 ### 上传日志
@@ -50,20 +49,11 @@ LogManager.getInstance().postLog(logGroupModel, new CompletedCallback<PostLogReq
      }
 });
 ```     
-### 保存日志
+### 暂停日志服务(app退到后台)
 ```android
-//非重要的日志可以采取持久化再上传
-LogModel logModel = new LogModel();
-logModel.putContent("androidLogError","android3232323");
-logModel.putContent("androidUrl","/android/url/error");
-List<LogModel> logList = new ArrayList<>();
-logList.add(logModel);
-LogGroupModel logGroupModel = new LogGroupModel("android-log-topic-20200618","android-log-source-20200618",logList);
-LogManager.getInstance().saveLog(logGroupModel);
+LogManager.getInstance().stopLogService();
 ```
-
-### 上传持久化的日志
+### 开始日志服务(app进到前台)
 ```android
-//一般在wifi情况下进行上传持久化日志
-LogManager.getInstance().uploadDbLogData();
+LogManager.getInstance().startLogService();
 ```

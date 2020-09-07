@@ -26,30 +26,21 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         //初始化日志
+        configLog();
     }
 
     void configLog(){
         String endPoint = "cn-shenzhen.log.aliyuncs.com";
-
         String accessKeyID = "LTAI*******oipRi";
-
         String accessKeySecret = "CYFJz*********i0P";
-
         String projectName = "jhb-log-test";
-
         String logStoreName = "jhb-logstore-test";
-
-        String token = "";
-
-        LogConfig config = new  LogConfig(endPoint,accessKeyID,accessKeySecret,projectName,logStoreName,token);
+        LogConfig config = new  LogConfig(endPoint,accessKeyID,accessKeySecret,projectName,logStoreName,"");
 
 //        初始化日志上传
 
         LogManager.getInstance().setupLogConfig(getApplicationContext(),config);
-
-        DatabaseManager.getInstance().setupDBContext(getApplicationContext());
 
     }
 
@@ -65,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
         List<LogModel> logList = new ArrayList<>();
         logList.add(logModel);
 
-        LogGroupModel logGroupModel = new LogGroupModel("android-log-topic-20200618","android-log-source-20200618",logList);
+        LogGroupModel logGroupModel = new LogGroupModel("android-log-topic-20200904","android-log-source-20200904",logList);
         LogManager.getInstance().saveLog(logGroupModel);
 
         Log.i("ddd","保存日志");
