@@ -4,13 +4,13 @@ import com.alibaba.fastjson.JSON;
 
 import com.alibaba.fastjson.JSONObject;
 import com.aliyun.sls.android.sdk.model.Log;
-
 import java.util.HashMap;
 import java.util.Map;
 
 public class LogModel {
     private String timeKey = "__time__";
     private String timestampKey = "timestamp";
+    private  String logContentKey = "log-content";
     public Map<String,Object> mContent = new HashMap<>();
 
     private int time = 0;
@@ -58,13 +58,17 @@ public class LogModel {
      */
     public Log convertAliyunLog(){
         Log logModel = new Log();
-
+        JSONObject logContentMap = new JSONObject();
         for(Map.Entry obj : this.mContent.entrySet()) {
             String key = (String) obj.getKey();
             if(key != timeKey){
-                logModel.PutContent(key,(String) obj.getValue());
+                try {
+                    logContentMap.put(key,obj.getValue());
+                }catch (Exception e){
+                }
             }
         }
+        logModel.PutContent(logContentKey,logContentMap.toString());
         logModel.PutTime(time);
         return  logModel;
     }
