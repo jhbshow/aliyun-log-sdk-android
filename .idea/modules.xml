@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/aliyun-log/aliyun-log.iml" filepath="$PROJECT_DIR$/.idea/modules/aliyun-log/aliyun-log.iml" group="aliyun-log-android/aliyun-log" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/aliyun-log-android.iml" filepath="$PROJECT_DIR$/.idea/modules/aliyun-log-android.iml" group="aliyun-log-android" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/app.iml" group="aliyun-log-android/app" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/aliyun-log-android.iml" filepath="$PROJECT_DIR$/.idea/modules/aliyun-log-android.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/aliyun-log/aliyun-log-android.aliyun-log.iml" filepath="$PROJECT_DIR$/.idea/modules/aliyun-log/aliyun-log-android.aliyun-log.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/aliyun-log-android.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/aliyun-log-android.app.iml" />
     </modules>
   </component>
 </project>
